@@ -11,6 +11,10 @@ tfds.disable_progress_bar()
 from IPython.display import clear_output
 import matplotlib.pyplot as plt
 
+from PIL import Image
+import numpy as np
+from skimage import transform
+
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 print("physical_devices-------------", len(physical_devices))
 tf.config.experimental.set_memory_growth(physical_devices[0], True)
@@ -154,6 +158,20 @@ class DisplayCallback(tf.keras.callbacks.Callback):
     show_predictions(file_name='prediction_after_epoch_'+str(epoch+1)+'.png')
     print ('\nSample Prediction after epoch {}\n'.format(epoch+1))
 
+# Include the epoch in the file name (uses `str.format`)
+checkpoint_path = "checkpoints/cp-{epoch:04d}.ckpt"
+checkpoint_dir = os.path.dirname(checkpoint_path)
+
+# Create a callback that saves the model's weights every 5 epochs
+cp_callback = tf.keras.callbacks.ModelCheckpoint(
+    filepath=checkpoint_path, 
+    verbose=1, 
+    save_weights_only=True,
+    period=5)
+
+# Save the weights using the `checkpoint_path` format
+model.save_weights(checkpoint_path.format(epoch=0))
+
 EPOCHS = 20
 VAL_SUBSPLITS = 5
 VALIDATION_STEPS = info.splits['test'].num_examples//BATCH_SIZE//VAL_SUBSPLITS
@@ -162,7 +180,7 @@ model_history = model.fit(train_dataset, epochs=EPOCHS,
                           steps_per_epoch=STEPS_PER_EPOCH,
                           validation_steps=VALIDATION_STEPS,
                           validation_data=test_dataset,
-                          callbacks=[DisplayCallback()])
+                          callbacks=[DisplayCallback(),cp_callback])
 
 loss = model_history.history['loss']
 val_loss = model_history.history['val_loss']
@@ -180,4 +198,22 @@ plt.legend()
 # plt.show()
 plt.savefig("loss_plot.png")
 
+def personal_prediction(image,file_name):
+  pred_mask = model.predict(image)
 
+  title = ['Input Image', 'Predicted Mask']
+
+  plt.title(title[i])
+  plt.imshow(tf.keras.preprocessing.image.array_to_img(pred_mask))
+  plt.axis('off')
+  plt.savefig(file_name)
+
+def load(filename):
+   np_image = Image.open(filename)
+   np_image = np.array(np_image).astype('float32')/255
+   np_image = transform.resize(np_image, (128, 128, 3))
+   np_image = np.expand_dims(np_image, axis=0)
+   return np_image
+
+image = load('./puppy.jpeg')
+personal_prediction(image,'puppy_result.png')
