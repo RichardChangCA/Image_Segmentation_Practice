@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
 from skimage import transform
+import os
 
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 print("physical_devices-------------", len(physical_devices))
@@ -200,10 +201,15 @@ plt.savefig("loss_plot.png")
 
 def personal_prediction(image,file_name):
   pred_mask = model.predict(image)
-
+  pred_mask = pred_mask.reshape((128,128,3))
+  image = image.reshape((128,128,3))
+  # print(pred_mask.shape)
   title = ['Input Image', 'Predicted Mask']
-
-  plt.title(title[i])
+  plt.figure()
+  plt.title(title)
+  plt.subplot(1, 2, 1)
+  plt.imshow(tf.keras.preprocessing.image.array_to_img(image))
+  plt.subplot(1, 2, 2)
   plt.imshow(tf.keras.preprocessing.image.array_to_img(pred_mask))
   plt.axis('off')
   plt.savefig(file_name)
