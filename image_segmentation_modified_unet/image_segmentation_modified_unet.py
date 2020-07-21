@@ -1,6 +1,7 @@
 # https://www.tensorflow.org/tutorials/images/segmentation
 
 # pip install -q git+https://github.com/tensorflow/examples.git
+# pip install -q git+https://github.com/tensorflow/datasets.git
 
 import tensorflow as tf
 from tensorflow_examples.models.pix2pix import pix2pix
